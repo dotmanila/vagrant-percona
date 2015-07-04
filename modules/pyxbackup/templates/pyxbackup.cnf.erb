@@ -1,0 +1,10 @@
+[pyxbackup]
+stor_dir=/vagrant/bkp/local/<%=@hostname %>/stor
+work_dir=/vagrant/bkp/local/<%=@hostname %>/work
+compress_with=qpress
+retention_sets=2
+remote_host=192.168.56.32
+remote_stor_dir=/vagrant/bkp/remote/<%=@hostname %>/stor
+remote_script=pyxbackup --config=/usr/local/bin/<%=@hostname %>.cnf
+ssh_user=vagrant
+ssh_opts=-i /home/vagrant/.ssh/id_rsa

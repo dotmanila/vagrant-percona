@@ -1,0 +1,129 @@
+#!/bin/sh
+#
+# sysbench Init style start-stop handler
+#
+# chkconfig:  2345 64 36
+# description: Controls the process for running CSV loader script for AAA data
+
+### BEGIN INIT INFO
+# Provides: sysbench
+# Required-Start: $network
+# Required-Stop: $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: sysbench Init style start-stop handler
+# Description: Controls the process for running sysbench process
+### END INIT INFO
+
+base=/usr/local/bin
+exec="$base/run_sysbench_oltp.sh"
+prog="sysbench"
+
+lockfile=/var/lock/subsys/$prog
+pidfile=/var/run/$prog.pid
+
+start() {
+    [ -x $exec ] || exit 5
+    echo -n $"Starting $prog: "
+    $exec > /dev/null 2>&1 &
+    retval=$?
+    pid=$!
+    echo
+    if [ $retval -eq 0 ]; then
+        touch $lockfile
+        echo $pid > $pidfile
+    fi
+
+    return $retval
+}
+
+stop() {
+    echo -n "Stopping $prog: "
+    pid=$(cat $pidfile)
+    kill $pid
+    retval=$?
+    if [ "$?" -ne "0" ]; then
+        echo "Process with PID $pid is not running"
+        exit 1
+    fi
+
+    echo
+    [ $retval -eq 0 ] && rm -f $lockfile && rm -f $pidfile
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    # run checks to determine if the service is running or use generic status
+    rh_status_q
+    retval=$?
+
+    if [ "$retval" -eq "2" ]; then
+        echo "PID file exists but process is not running [$prog]"
+        exit 2
+    elif [ "$retval" -ne "0" ]; then
+        echo "Process is not running! [$prog]"
+        exit 5
+    else
+        echo "OK - Process is running [$prog]"
+        exit 0
+    fi
+}
+
+rh_status_q() {
+    if [ ! -f $pidfile ]; then
+        return 1
+    fi
+
+    pid=$(cat $pidfile)
+    kill -s 0 $pid > /dev/null 2>&1
+    if [ "$?" -ne "0" ]; then
+        return 2
+    fi
+
+    return 0
+}
+
+case "$1" in
+    start)
+        rh_status_q && exit 0
+        $1
+        ;;
+    stop)
+        rh_status_q || exit 0
+        $1
+        ;;
+    restart)
+        $1
+        ;;
+    reload)
+        rh_status_q || exit 7
+        $1
+        ;;
+    force-reload)
+        force_reload
+        ;;
+    status)
+        rh_status
+        ;;
+    condrestart|try-restart)
+        rh_status_q || exit 0
+        restart
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+        exit 2
+esac
+exit $?
