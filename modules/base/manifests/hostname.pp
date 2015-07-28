@@ -1,7 +1,8 @@
 class base::hostname {
 	exec {
-		"set_hostname":
-			path    => ["/usr/sbin","/bin","/usr/bin"],
-			command => "hostname $vagrant_hostname"
+		"set_hostname": 
+			command => "hostname $vagrant_hostname",
+			unless => "test `hostname` = $vagrant_hostname",
+			path => ["/bin", "/usr/bin"];
 	}
 }

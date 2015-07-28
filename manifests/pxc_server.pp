@@ -1,5 +1,6 @@
 include stdlib 
 
+include base::hostname
 include base::packages
 include base::insecure
 include base::swappiness
@@ -66,7 +67,7 @@ if $enable_consul == 'true' {
         'data_dir'    => '/opt/consul',
         'log_level'   => 'INFO',
         'node_name'   => $node_name ? {
-            undef => $hostname,
+            undef => $vagrant_hostname,
             default => $node_name
         },
         'bind_addr'   => $default_interface ? {
@@ -84,7 +85,6 @@ if $enable_consul == 'true' {
 
 	include consul::local_dns
 	
-	Class['percona::cluster::server'] ~> Class['consul'] 
 	Class['consul::local_dns'] -> Class['percona::cluster::service'] 
 	Class['consul'] -> Class['percona::cluster::service']
 
@@ -94,6 +94,14 @@ if ( $percona_agent_api_key ) {
 	include percona::agent
     
     Class['percona::cluster::service'] -> Class['percona::agent']
+}
+
+if ( $vividcortex_api_key ) {
+	class { 'misc::vividcortex':
+		api_key => $vividcortex_api_key
+	}
+    
+    Class['percona::cluster::service'] -> Class['misc::vividcortex']
 }
 
 if $sysbench_skip_test_client != 'true' {
