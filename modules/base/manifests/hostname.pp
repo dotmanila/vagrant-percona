@@ -1,9 +1,7 @@
 class base::hostname {
-
-exec {
-        "set_hostname":
-                command => "/usr/bin/hostname $vagrant_hostname"
-}
-
-
+	exec {
+		"set_hostname":
+			path    => ["/usr/sbin","/bin","/usr/bin"],
+			command => "hostname $vagrant_hostname"
+	}
 }
