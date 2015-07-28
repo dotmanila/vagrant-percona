@@ -10,6 +10,9 @@ if( $enable_57 == undef ) {
 	$enable_57 = 0
 }
 
+include mysql::server
+include mysql::config
+include mysql::service
 
 class { 'mysql::repository':
 	55_enabled => $enable_55,
@@ -17,14 +20,16 @@ class { 'mysql::repository':
 	57_enabled => $enable_57
 }
 
-class { 'mysql::datadir':
-	datadir_dev => $datadir_dev,
-	datadir_dev_scheduler => $datadir_dev_scheduler,
-	datadir_fs => $datadir_fs,
-	datadir_fs_opts => $datadir_fs_opts
+if $datadir_dev {
+	class { 'mysql::datadir':
+		datadir_dev => $datadir_dev,
+		datadir_dev_scheduler => $datadir_dev_scheduler,
+		datadir_fs => $datadir_fs,
+		datadir_fs_opts => $datadir_fs_opts
+	}
+
+	Class['mysql::datadir'] -> Class['mysql::server']
 }
-include mysql::server
-include mysql::config
-include mysql::service
-Class['mysql::datadir'] -> Class['mysql::server']
+
+
 Class['mysql::repository'] -> Class['mysql::server'] -> Class['mysql::config'] -> Class['mysql::service']
